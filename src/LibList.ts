@@ -18,6 +18,7 @@ const newListV1 = {
         'redux-saga': '1.1.3',
         'react-native-localize': '^1.4.0',
         'react-native-root-siblings': '3.2.1',
+        '@react-native-community/masked-view': '^0.1.10',
     },
     devDependencies: {
         eslint: '^6.8.0',

@@ -69,6 +69,8 @@ const dlTemplate = async (cwd: string) => {
 const rewritePKG = async (cwd: string) => {
     const projectPkg = path.resolve(cwd, 'package.json');
     const projectPkgJSon = require(projectPkg);
+    const projectDevDependencies = projectPkgJSon.devDependencies;
+    delete projectDevDependencies['@react-native-community/eslint-config'];
     const newProjectPkgJSon = {
         ...projectPkgJSon,
         dependencies: {
@@ -76,7 +78,7 @@ const rewritePKG = async (cwd: string) => {
             ...PKGList.dependencies,
         },
         devDependencies: {
-            ...projectPkgJSon.devDependencies,
+            ...projectDevDependencies,
             ...PKGList.devDependencies,
         },
         scripts: {

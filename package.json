@@ -1,6 +1,6 @@
 {
     "name": "react-native-cp-init",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "CLI to add cp template to an existing react-native project",
     "main": "index.js",
     "license": "MIT",
@@ -21,7 +21,6 @@
         "axios": "^0.21.1",
         "chalk": "^4.1.0",
         "extract-zip": "^2.0.1",
-        "has-yarn": "^2.1.0",
         "mvdir": "^1.0.21",
         "write-pkg": "^4.0.0",
         "yargs": "^16.2.0"

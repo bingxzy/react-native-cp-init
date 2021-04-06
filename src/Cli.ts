@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import hasYarn from 'has-yarn';
 import { CodeError, CodeErrors, CodeErrorType } from './CodeError';
 import fs from 'fs';
 import writePkg from 'write-pkg';
@@ -11,8 +10,6 @@ import extractZip from 'extract-zip';
 import mvdir from 'mvdir';
 import { execSync } from 'child_process';
 import yargs from 'yargs';
-
-// const tmpLink =  + '/Archive.zip';
 
 const argv = yargs
     .version(false)
@@ -26,7 +23,11 @@ const argv = yargs
     })
     .strict(true).argv;
 
-const getRNversion = async (cwd: string) => {
+const hasYarn = (cwd: string = process.cwd()) => {
+    return fs.existsSync(path.resolve(cwd, 'yarn.lock'));
+};
+
+const getRNversion = async (cwd: string = process.cwd()) => {
     try {
         const rnPkgJsonPath = require.resolve('react-native/package.json', {
             paths: [cwd],
@@ -42,7 +43,7 @@ const getRNversion = async (cwd: string) => {
     }
 };
 
-const dlTemplate = async (cwd: string) => {
+const dlTemplate = async (cwd: string = process.cwd()) => {
     console.log(chalk.grey('Downloading Template'));
     const tmpLink = cwd + '/Archive.zip';
     return new Promise((resolve, reject) => {
@@ -79,7 +80,7 @@ const dlTemplate = async (cwd: string) => {
     });
 };
 
-const rewritePKG = async (cwd: string) => {
+const rewritePKG = async (cwd: string = process.cwd()) => {
     const projectPkg = path.resolve(cwd, 'package.json');
     const projectPkgJSon = require(projectPkg);
     const projectDevDependencies = projectPkgJSon.devDependencies;
@@ -103,7 +104,7 @@ const rewritePKG = async (cwd: string) => {
     console.log(chalk.grey('rewrite package.json'));
 };
 
-const setupTemplate = async (cwd: string) => {
+const setupTemplate = async (cwd: string = process.cwd()) => {
     console.log(chalk.grey('Setup Template....'));
     const tmpLink = cwd + '/Archive.zip';
     const ArchivePath = fs.existsSync(tmpLink);
@@ -139,7 +140,7 @@ const setupTemplate = async (cwd: string) => {
     await mvdir(outputPath, cwd);
 };
 
-const installPackage = async (cwd: string) => {
+const installPackage = async (cwd: string = process.cwd()) => {
     const cmdOptipns = argv.verbose
         ? {
               stdio: 'inherit' as 'inherit',

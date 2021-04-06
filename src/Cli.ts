@@ -10,8 +10,21 @@ import extractZip from 'extract-zip';
 // @ts-ignore
 import mvdir from 'mvdir';
 import { execSync } from 'child_process';
+import yargs from 'yargs';
 
 // const tmpLink =  + '/Archive.zip';
+
+const argv = yargs
+    .version(false)
+    .strict(true)
+    .options({
+        verbose: {
+            type: 'boolean',
+            describe: 'Install log output',
+            default: false,
+        },
+    })
+    .strict(true).argv;
 
 const getRNversion = async (cwd: string) => {
     try {
@@ -127,9 +140,14 @@ const setupTemplate = async (cwd: string) => {
 };
 
 const installPackage = async (cwd: string) => {
+    const cmdOptipns = argv.verbose
+        ? {
+              stdio: 'inherit' as 'inherit',
+          }
+        : {};
     console.log(chalk.grey('Installing dependencies...'));
     const packageCmd = hasYarn(cwd) ? 'yarn' : 'npm';
-    execSync(`${packageCmd} install`);
+    execSync(`${packageCmd} install`, cmdOptipns);
 };
 
 const setExit = (exitCode: CodeErrorType) => {

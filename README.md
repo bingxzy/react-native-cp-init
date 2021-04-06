@@ -11,3 +11,10 @@ Example usage
 ```
 npx react-native-cp-init
 ```
+
+Options:
+
+| option    | description        |
+| --------- | ------------------ |
+| --help    | Show help          |
+| --verbose | Install log output |

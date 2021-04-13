@@ -199,25 +199,20 @@ const setCustomPkg = (cwd: string, pkgpath: string) => {
                             const pkgJson = require(path.resolve(tmpPkgPath));
                             replacePKG(cwd, pkgJson)
                                 .then(() => {
-                                    fs.unlinkSync(tmpPkgPath);
                                     return resolve(true);
                                 })
                                 .catch(() => {
-                                    fs.unlinkSync(tmpPkgPath);
                                     return resolve(false);
                                 });
                         });
                         stream.on('error', () => {
-                            fs.unlinkSync(tmpPkgPath);
                             return resolve(false);
                         });
                     } else {
-                        fs.unlinkSync(tmpPkgPath);
                         return resolve(false);
                     }
                 })
                 .catch(() => {
-                    fs.unlinkSync(tmpPkgPath);
                     return resolve(false);
                 });
         }

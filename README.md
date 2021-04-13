@@ -14,7 +14,8 @@ npx react-native-cp-init
 
 Options:
 
-| option    | description        |
-| --------- | ------------------ |
-| --help    | Show help          |
-| --verbose | Install log output |
+| option    | description        | example                      |
+| --------- | ------------------ | ---------------------------- |
+| --help    | Show help          | none                         |
+| --verbose | Install log output | none                         |
+| --path    | Setup package path | https://xxx.com/package.json |

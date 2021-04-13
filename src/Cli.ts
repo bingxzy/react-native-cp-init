@@ -11,6 +11,7 @@ import mvdir from 'mvdir';
 import { execSync } from 'child_process';
 import yargs from 'yargs';
 
+let RNVersion = '';
 const argv = yargs
     .version(false)
     .strict(true)
@@ -20,11 +21,27 @@ const argv = yargs
             describe: 'Install log output',
             default: false,
         },
+        path: {
+            type: 'string',
+            describe: 'setup package path (local or remote)',
+            default: '',
+        },
     })
     .strict(true).argv;
 
 const hasYarn = (cwd: string = process.cwd()) => {
     return fs.existsSync(path.resolve(cwd, 'yarn.lock'));
+};
+
+const isArchiveRN = (version: string) => {
+    const arr = version.split('.');
+    const base = arr[1];
+    if (base) {
+        const baseNum = Number.parseInt(base, 10);
+        return baseNum <= 59;
+    } else {
+        return false;
+    }
 };
 
 const getRNversion = async (cwd: string = process.cwd()) => {
@@ -34,6 +51,7 @@ const getRNversion = async (cwd: string = process.cwd()) => {
         });
         const { version } = require(rnPkgJsonPath);
         console.log(chalk.grey('react-native version is ' + version));
+        RNVersion = version;
         return version;
     } catch (error) {
         throw new CodeError(
@@ -45,7 +63,7 @@ const getRNversion = async (cwd: string = process.cwd()) => {
 
 const dlTemplate = async (cwd: string = process.cwd()) => {
     console.log(chalk.grey('Downloading Template'));
-    const tmpLink = cwd + '/Archive.zip';
+    const tmpLink = path.resolve(cwd, 'Archive.zip');
     return new Promise((resolve, reject) => {
         const stream = fs.createWriteStream(tmpLink);
         const dlLink =
@@ -81,10 +99,13 @@ const dlTemplate = async (cwd: string = process.cwd()) => {
 };
 
 const rewritePKG = async (cwd: string = process.cwd()) => {
-    const projectPkg = path.resolve(cwd, 'package.json');
+    const projectPkg = path.join(cwd, 'package.json');
     const projectPkgJSon = require(projectPkg);
     const projectDevDependencies = projectPkgJSon.devDependencies;
     delete projectDevDependencies['@react-native-community/eslint-config'];
+    const postinstall = isArchiveRN(RNVersion)
+        ? null
+        : { postinstall: 'npx pod-install && npx jetify' };
     const newProjectPkgJSon = {
         ...projectPkgJSon,
         dependencies: {
@@ -97,7 +118,7 @@ const rewritePKG = async (cwd: string = process.cwd()) => {
         },
         scripts: {
             ...projectPkgJSon.scripts,
-            postinstall: 'npx pod-install && npx jetify',
+            ...postinstall,
         },
     };
     await writePkg(cwd, { ...newProjectPkgJSon });
@@ -106,7 +127,7 @@ const rewritePKG = async (cwd: string = process.cwd()) => {
 
 const setupTemplate = async (cwd: string = process.cwd()) => {
     console.log(chalk.grey('Setup Template....'));
-    const tmpLink = cwd + '/Archive.zip';
+    const tmpLink = path.join(cwd, 'Archive.zip');
     const ArchivePath = fs.existsSync(tmpLink);
     if (!ArchivePath) {
         throw new CodeError(
@@ -114,28 +135,28 @@ const setupTemplate = async (cwd: string = process.cwd()) => {
             'CLI download template file fail, please try again!',
         );
     }
-    const outputPath = cwd + '/output';
+    const outputPath = path.join(cwd, 'output');
     await extractZip(tmpLink, { dir: outputPath });
     fs.unlinkSync(tmpLink);
-    const rnAppPath = fs.existsSync(cwd + '/App.js');
-    const eslintPath = fs.existsSync(cwd + '/_eslintrc.js');
-    const eslintPath2 = fs.existsSync(cwd + '/.eslintrc.js');
-    const prettierrcPath = fs.existsSync(cwd + '/_prettierrc.js');
-    const prettierrcPath2 = fs.existsSync(cwd + '/.prettierrc.js');
+    const rnAppPath = fs.existsSync(path.join(cwd, 'App.js'));
+    const eslintPath = fs.existsSync(path.join(cwd, '_eslintrc.js'));
+    const eslintPath2 = fs.existsSync(path.join(cwd, '.eslintrc.js'));
+    const prettierrcPath = fs.existsSync(path.join(cwd, '_prettierrc.js'));
+    const prettierrcPath2 = fs.existsSync(path.join(cwd, '.prettierrc.js'));
     if (rnAppPath) {
-        fs.unlinkSync(cwd + '/App.js');
+        fs.unlinkSync(path.join(cwd, 'App.js'));
     }
     if (eslintPath) {
-        fs.unlinkSync(cwd + '/_eslintrc.js');
+        fs.unlinkSync(path.join(cwd, '_eslintrc.js'));
     }
     if (eslintPath2) {
-        fs.unlinkSync(cwd + '/.eslintrc.js');
+        fs.unlinkSync(path.join(cwd, '.eslintrc.js'));
     }
     if (prettierrcPath) {
-        fs.unlinkSync(cwd + '/_prettierrc.js');
+        fs.unlinkSync(path.join(cwd, '_prettierrc.js'));
     }
     if (prettierrcPath2) {
-        fs.unlinkSync(cwd + '/.prettierrc.js');
+        fs.unlinkSync(path.join(cwd, '.prettierrc.js'));
     }
     await mvdir(outputPath, cwd);
 };
@@ -158,13 +179,120 @@ const setExit = (exitCode: CodeErrorType) => {
     }
 };
 
+const setCustomPkg = (cwd: string, pkgpath: string) => {
+    return new Promise((resolve, reject) => {
+        if (!isRemote(pkgpath)) {
+            const pkgJson = require(path.resolve(pkgpath));
+            replacePKG(cwd, pkgJson).then(() => {
+                resolve(true);
+            });
+        } else {
+            const tmpPkgPath = path.join(cwd, '_package.json');
+            const stream = fs.createWriteStream(tmpPkgPath);
+            axios
+                .get(pkgpath, { responseType: 'stream' })
+                .then(({ status, data }) => {
+                    if (status === 200) {
+                        data.pipe(stream);
+                        stream.on('finish', () => {
+                            stream.close();
+                            const pkgJson = require(path.resolve(tmpPkgPath));
+                            replacePKG(cwd, pkgJson)
+                                .then(() => {
+                                    fs.unlinkSync(tmpPkgPath);
+                                    return resolve(true);
+                                })
+                                .catch(() => {
+                                    fs.unlinkSync(tmpPkgPath);
+                                    return resolve(false);
+                                });
+                        });
+                        stream.on('error', () => {
+                            fs.unlinkSync(tmpPkgPath);
+                            return resolve(false);
+                        });
+                    } else {
+                        fs.unlinkSync(tmpPkgPath);
+                        return resolve(false);
+                    }
+                })
+                .catch(() => {
+                    fs.unlinkSync(tmpPkgPath);
+                    return resolve(false);
+                });
+        }
+    });
+};
+
+const replacePKG = async (cwd: string = process.cwd(), pkgJson: any) => {
+    console.log(chalk.grey('rewrite package.json'));
+    const projectPkg = path.resolve(cwd, 'package.json');
+    const projectPkgJSon = require(projectPkg);
+    const projectDevDependencies = projectPkgJSon.devDependencies;
+    const postinstall = isArchiveRN(RNVersion)
+        ? null
+        : { postinstall: 'npx pod-install && npx jetify' };
+    const newProjectPkgJSon = {
+        ...projectPkgJSon,
+        dependencies: {
+            ...projectPkgJSon.dependencies,
+            ...pkgJson.dependencies,
+        },
+        devDependencies: {
+            ...projectDevDependencies,
+            ...pkgJson.devDependencies,
+        },
+        scripts: {
+            ...projectPkgJSon.scripts,
+            ...pkgJson.scripts,
+            ...postinstall,
+        },
+    };
+    await writePkg(cwd, { ...newProjectPkgJSon });
+};
+
+const crateTemplateDir = (cwd: string, pkgLink: string) => {
+    if (isRemote(pkgLink)) {
+        const tmpPkgPath = path.join(cwd, '_package.json');
+        if (fs.existsSync(tmpPkgPath)) {
+            fs.unlinkSync(tmpPkgPath);
+        } else {
+            throw new CodeError(
+                'NoCustomPKGFound',
+                'CLI download package json file fail, please try again!',
+            );
+        }
+    }
+    console.log(chalk.grey('create template dir'));
+    const dirNameList = ['api', 'comm', 'language', 'router', 'screens', 'static', 'utils'];
+    const srcPath = path.join(cwd, 'src');
+    if (!fs.existsSync(srcPath)) {
+        fs.mkdirSync(srcPath);
+        dirNameList.forEach((element) => {
+            const kPath = path.join(srcPath, element);
+            if (!fs.existsSync(kPath)) {
+                fs.mkdirSync(kPath);
+            }
+        });
+    }
+};
+
+const isRemote = (path: string) => /^((https|http)?:\/\/)[^\s]+/.test(path);
+
 const init = async () => {
+    const isExistCmdPath = argv.path !== '' && argv.path.length > 0;
     const cwd = process.cwd();
     await getRNversion(cwd);
-    await rewritePKG(cwd);
-    await dlTemplate(cwd);
-    await setupTemplate(cwd);
-    await installPackage(cwd);
+    if (!isExistCmdPath) {
+        await rewritePKG(cwd);
+        await dlTemplate(cwd);
+        await setupTemplate(cwd);
+        await installPackage(cwd);
+    } else {
+        await setCustomPkg(cwd, argv.path);
+        crateTemplateDir(cwd, argv.path);
+        await installPackage(cwd);
+    }
     setExit('Success');
 };
 

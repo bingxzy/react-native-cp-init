@@ -4,6 +4,7 @@ export const CodeErrors = {
     NoReactNativeFound: 3,
     Autolinking: 4,
     NoTmpArchiveFound: 5,
+    NoCustomPKGFound: 6,
     Unknown: -1,
 };
 

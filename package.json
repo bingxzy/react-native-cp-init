@@ -1,6 +1,6 @@
 {
     "name": "react-native-cp-init",
-    "version": "1.0.11",
+    "version": "1.0.12",
     "description": "CLI to add cp template to an existing react-native project",
     "main": "index.js",
     "license": "MIT",

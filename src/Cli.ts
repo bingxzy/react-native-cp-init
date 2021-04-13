@@ -202,17 +202,21 @@ const setCustomPkg = (cwd: string, pkgpath: string) => {
                                     return resolve(true);
                                 })
                                 .catch(() => {
+                                    fs.unlinkSync(tmpPkgPath);
                                     return resolve(false);
                                 });
                         });
                         stream.on('error', () => {
+                            fs.unlinkSync(tmpPkgPath);
                             return resolve(false);
                         });
                     } else {
+                        fs.unlinkSync(tmpPkgPath);
                         return resolve(false);
                     }
                 })
                 .catch(() => {
+                    fs.unlinkSync(tmpPkgPath);
                     return resolve(false);
                 });
         }

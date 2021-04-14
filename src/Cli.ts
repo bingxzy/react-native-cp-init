@@ -67,7 +67,7 @@ const dlTemplate = async (cwd: string = process.cwd()) => {
     return new Promise((resolve, reject) => {
         const stream = fs.createWriteStream(tmpLink);
         const dlLink =
-            'https://raw.githubusercontent.com/punszeto/react-native-template-cp/v1.0.1/template/Archive.zip';
+            'https://raw.githubusercontent.com/punszeto/react-native-template-cp/dev-hooks/template/Archive.zip';
         axios({
             method: 'GET',
             responseType: 'stream',
@@ -234,16 +234,16 @@ const replacePKG = async (cwd: string = process.cwd(), pkgJson: any) => {
     const newProjectPkgJSon = {
         ...projectPkgJSon,
         dependencies: {
-            ...projectPkgJSon.dependencies,
             ...pkgJson.dependencies,
+            ...projectPkgJSon.dependencies,
         },
         devDependencies: {
-            ...projectDevDependencies,
             ...pkgJson.devDependencies,
+            ...projectDevDependencies,
         },
         scripts: {
-            ...projectPkgJSon.scripts,
             ...pkgJson.scripts,
+            ...projectPkgJSon.scripts,
             ...postinstall,
         },
     };

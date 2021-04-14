@@ -27,6 +27,7 @@ const newListV1 = {
         'eslint-plugin-jsx-a11y': '^6.2.3',
         'eslint-plugin-react': '^7.19.0',
         'eslint-plugin-react-hooks': '^2.5.1',
+        'babel-eslint': '^10.0.3',
     },
 };
 

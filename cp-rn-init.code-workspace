@@ -1,16 +1,21 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"extensions": {
-		"recommendations": [
-			"christian-kohler.npm-intellisense",
-			"gamunu.vscode-yarn",
-			"esbenp.prettier-vscode",
-			"dkneeland.yarn-task-provider",
-			"xabikos.javascriptsnippets",
-		],
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "extensions": {
+        "recommendations": [
+            "christian-kohler.npm-intellisense",
+            "gamunu.vscode-yarn",
+            "esbenp.prettier-vscode",
+            "dkneeland.yarn-task-provider",
+            "xabikos.javascriptsnippets"
+        ]
+    },
+    "settings": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "terminal.explorerKind": "external"
+    }
 }
